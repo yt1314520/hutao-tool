@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+  IgnorableNamespaces="com uap uap3 desktop desktop6 rescap mp">
+
+  <Identity
+    Name="E8B6E2B3-D2A0-4435-A81D-2A16AAF405C7"
+    Publisher="CN=SnapHutaoRemasteringProject"
+    Version="1.19.9.0" />
+
+  <Properties>
+    <DisplayName>Snap Hutao Remastered Dev</DisplayName>
+    <PublisherDisplayName>SnapHutaoRemasteringProject</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+    <desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.22621.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us"/>
+    <Resource Language="zh-cn"/>
+  </Resources>
+
+  <Applications>
+    <Application Id="App"
+      Executable="$targetnametoken$.exe"
+      EntryPoint="$targetentrypoint$">
+      <uap:VisualElements
+        DisplayName="Snap Hutao Remastered Dev"
+        Description="A Snap Hutao Remastered Dev Software"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"  Square71x71Logo="Assets\SmallTile.png" Square310x310Logo="Assets\LargeTile.png"/>
+        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+      </uap:VisualElements>
+      <Extensions>
+        <desktop:Extension Category="windows.toastNotificationActivation">
+          <desktop:ToastNotificationActivation ToastActivatorCLSID="F32B561D-752E-472B-A22C-85824D421E1A"/>
+        </desktop:Extension>
+        <com:Extension Category="windows.comServer">
+          <com:ComServer>
+            <com:ExeServer Executable="Snap.Hutao.Remastered.exe" Arguments="----AppNotificationActivated:" DisplayName="Snap Hutao Remastered Toast Activator">
+              <com:Class Id="F32B561D-752E-472B-A22C-85824D421E1A" DisplayName="Snap Hutao Dev Toast Activator"/>
+            </com:ExeServer>
+          </com:ComServer>
+        </com:Extension>
+        <uap:Extension Category="windows.protocol">
+          <uap:Protocol Name="hutao">
+            <uap:DisplayName>胡桃重制版 Dev</uap:DisplayName>
+          </uap:Protocol>
+        </uap:Extension>
+		<uap3:Extension Category="windows.appExecutionAlias"
+		  Executable="Snap.Hutao.Remastered.exe"
+		  EntryPoint="Windows.FullTrustApplication">
+		  <uap3:AppExecutionAlias>
+		    <desktop:ExecutionAlias Alias="shdev.exe" />
+		  </uap3:AppExecutionAlias>
+		</uap3:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust"/>
+    <rescap:Capability Name="unvirtualizedResources"/>
+    <rescap:Capability Name="packageManagement"/>
+  </Capabilities>
+</Package>
