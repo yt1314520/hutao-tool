@@ -53,7 +53,7 @@ jobs:
           dotnet cake build-installer.cake
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.ver.outputs.version }}-win10
           name: Snap Hutao Remastered 自用兼容版 v${{ steps.ver.outputs.version }} (Win10 Compatible)
