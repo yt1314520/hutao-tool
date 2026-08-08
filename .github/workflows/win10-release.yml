@@ -1,0 +1,72 @@
+name: Win10 Compatible Release (自用兼容版)
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
+      - name: Get version
+        id: ver
+        shell: pwsh
+        run: |
+          $v = [xml](Get-Content -LiteralPath 'src/Snap.Hutao.Remastered/Snap.Hutao.Remastered/Package.appxmanifest')
+          $pkg = $v.Package.Identity.Version
+          "version=$pkg" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Build MSIX (unsigned)
+        shell: pwsh
+        run: |
+          dotnet tool restore
+          dotnet cake test-sign.cake
+
+      - name: Build installer (self-signed cert)
+        shell: pwsh
+        run: |
+          $pw = "hutao-compat-2026"
+          $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=Hutao Compatible Build" -CertStoreLocation Cert:\CurrentUser\My -ErrorAction SilentlyContinue
+          if ($null -eq $cert) {
+            $cert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert | Select-Object -First 1
+          }
+          $sec = ConvertTo-SecureString -String $pw -Force -AsPlainText
+          Export-PfxCertificate -Cert $cert -FilePath temp.pfx -Password $sec -Force | Out-Null
+          $env:CERTIFICATE = [Convert]::ToBase64String([IO.File]::ReadAllBytes("$PWD\temp.pfx"))
+          $env:PW = $pw
+          dotnet cake build-installer.cake
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}-win10
+          name: Snap Hutao Remastered 自用兼容版 v${{ steps.ver.outputs.version }} (Win10 Compatible)
+          body: |
+            基于 Snap.Hutao.Remastered 的 Win10 兼容版。
+
+            **兼容性修复**：原版要求 Windows >= 10.0.19045.5371，现降至 10.0.19041.0，可在 Win10 2004+(含 22H2 各 UBR) 运行。
+
+            **安装方式**：
+            - `-Setup.exe`：Inno 安装器，运行后按向导安装（若提示 SmartScreen，点"更多信息→仍要运行"即可，自签名证书）。
+            - `-Test-*.msix`：MSIX 包，需在 Windows 设置中开启"开发人员模式"后双击旁加载安装。
+          files: |
+            src/output/*.msix
+            publish/*.exe
+          update: true
+          generate_release_notes: true
