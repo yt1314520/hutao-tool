@@ -70,10 +70,8 @@ public sealed partial class LegacyMetadataService : IMetadataService
             await gitRepositoryService.EnsureRepositoryAsync("Snap.Metadata").ConfigureAwait(false);
             isInitialized = await DownloadMetadataDescriptionFileAndValidateAsync(token).ConfigureAwait(false);
 
-            if (isInitialized)
-            {
-                initializeCompletionSource.TrySetResult();
-            }
+            // 兼容版：无论成功与否都必须完成该 TCS，否则失败后等待 InitializeAsync() 的调用方会永久挂起。
+            initializeCompletionSource.TrySetResult();
 
             return isInitialized;
         }

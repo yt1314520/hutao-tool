@@ -162,11 +162,9 @@ public sealed partial class MainViewModel : Abstraction.ViewModel, IDisposable
 
     private async ValueTask<bool> RetryStartupAsync(CancellationToken token)
     {
-        if (!await networkRetryCoordinator.HasInternetAccessAsync(token).ConfigureAwait(false))
-        {
-            networkRetryCoordinator.MarkPending("MainViewModel.Startup", SH.ViewModelMainNetworkUnavailableWillAutoRetry);
-            return false;
-        }
+        // 兼容版：不再因检测到无网络就直接放弃启动。
+        // 本地已存在元数据仓库时，离线也能完成初始化，保证本地功能可用。
+        bool hasInternet = await networkRetryCoordinator.HasInternetAccessAsync(token).ConfigureAwait(false);
 
         try
         {
@@ -176,9 +174,18 @@ public sealed partial class MainViewModel : Abstraction.ViewModel, IDisposable
                 return false;
             }
 
-            await userService.RetryResumeUninitializedUsersAsync(token).ConfigureAwait(false);
-            await CheckUpdateAsync().ConfigureAwait(false);
-            networkRetryCoordinator.ClearPending("MainViewModel.Startup");
+            if (hasInternet)
+            {
+                await userService.RetryResumeUninitializedUsersAsync(token).ConfigureAwait(false);
+                await CheckUpdateAsync().ConfigureAwait(false);
+                networkRetryCoordinator.ClearPending("MainViewModel.Startup");
+            }
+            else
+            {
+                // 离线：元数据已就绪，本地功能可用；仅标记待重试，网络恢复后自动补齐联网步骤。
+                networkRetryCoordinator.MarkPending("MainViewModel.Startup", SH.ViewModelMainNetworkUnavailableWillAutoRetry);
+            }
+
             return true;
         }
         catch (Exception ex)

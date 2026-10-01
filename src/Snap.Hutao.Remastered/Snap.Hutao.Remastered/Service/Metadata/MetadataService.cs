@@ -52,10 +52,15 @@ public sealed partial class MetadataService : IMetadataService
                 initializeCompletionSource = new();
             }
 
-            (isInitialized, _) = await gitRepositoryService.EnsureRepositoryAsync("Snap.Metadata").ConfigureAwait(false);
-
-            if (isInitialized)
+            try
             {
+                (isInitialized, _) = await gitRepositoryService.EnsureRepositoryAsync("Snap.Metadata").ConfigureAwait(false);
+            }
+            finally
+            {
+                // 兼容版：无论成功、失败还是抛异常，都必须完成该 TCS。
+                // 原版仅在成功时完成，失败后等待 InitializeAsync() 的调用方会永久挂起，
+                // 表现为断网时所有依赖元数据的页面卡在加载中、整个应用无法使用。
                 initializeCompletionSource.TrySetResult();
             }
 

@@ -47,13 +47,22 @@ public sealed partial class GitRepositoryService : IGitRepositoryService
 
         using (await repoLock.LockAsync(name).ConfigureAwait(false))
         {
+            string localDirectory = Path.GetFullPath(Path.Combine(HutaoRuntime.GetDataRepositoryDirectory(), name));
+
             ImmutableArray<GitRepository> infos;
             using (IServiceScope scope = serviceProvider.CreateScope())
             {
                 HutaoInfrastructureClient infrastructureClient = scope.ServiceProvider.GetRequiredService<HutaoInfrastructureClient>();
                 HutaoResponse<ImmutableArray<GitRepository>> response = await infrastructureClient.GetGitRepositoryAsync(name).ConfigureAwait(false);
-                if (!ResponseValidator.TryValidate(response, scope.ServiceProvider, out infos))
+                if (!ResponseValidator.TryValidateWithoutUINotification(response, scope.ServiceProvider, out infos))
                 {
+                    // 兼容版：无法从服务器获取仓库信息（通常是离线）时，回退到本地已有仓库。
+                    // 本地仓库有效则直接使用，避免因断网导致元数据初始化失败、进而拖垮整个界面。
+                    if (Repository.IsValid(localDirectory))
+                    {
+                        return new(true, localDirectory);
+                    }
+
                     return new(false, default);
                 }
             }
