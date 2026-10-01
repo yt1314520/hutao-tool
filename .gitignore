@@ -395,6 +395,10 @@ test-results/
 # Icon must end with two \r
 Icon
 
+# 例外：这些是项目源码目录，不是构建产物（VisualStudio 默认规则会误伤）
+!src/Snap.Hutao.Remastered/Snap.Hutao.Remastered/Win32/
+!src/Snap.Hutao.Remastered/Snap.Hutao.Remastered/Resource/Icon/
+
 
 # Thumbnails
 ._*
