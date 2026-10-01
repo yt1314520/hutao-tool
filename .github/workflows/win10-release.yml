@@ -1,0 +1,101 @@
+name: Win10 Compatible Release (自用兼容版)
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
+      - name: Read version from manifest
+        id: ver
+        shell: pwsh
+        run: |
+          $v = [xml](Get-Content -LiteralPath 'src/Snap.Hutao.Remastered/Snap.Hutao.Remastered/Package.appxmanifest')
+          $pkg = $v.Package.Identity.Version
+          "version=$pkg" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          Write-Host "Version: $pkg"
+
+      - name: Create self-signed code-signing certificate
+        shell: pwsh
+        run: |
+          $pw = "hutao-compat-build"
+          $cert = New-SelfSignedCertificate `
+            -Type CodeSigningCert `
+            -Subject "CN=SnapHutaoRemasteringProject" `
+            -KeyAlgorithm RSA `
+            -KeyLength 2048 `
+            -HashAlgorithm SHA256 `
+            -CertStoreLocation Cert:\CurrentUser\My `
+            -NotAfter (Get-Date).AddYears(5)
+          $sec = ConvertTo-SecureString -String $pw -Force -AsPlainText
+          Export-PfxCertificate -Cert $cert -FilePath temp.pfx -Password $sec -Force | Out-Null
+          [Convert]::ToBase64String([IO.File]::ReadAllBytes("$PWD\temp.pfx")) | Set-Content -LiteralPath cert.b64 -NoNewline
+          Write-Host "Subject : $($cert.Subject)"
+          Write-Host "Thumb   : $($cert.Thumbprint)"
+          Write-Host "PFX size: $((Get-Item temp.pfx).Length) bytes"
+
+      - name: Publish (MSIX + Installer, signed)
+        shell: pwsh
+        run: |
+          $env:PUBLISH_CERT = Get-Content -LiteralPath cert.b64 -Raw
+          $env:PUBLISH_PW = "hutao-compat-build"
+          dotnet tool restore
+          dotnet cake publish.cake
+
+      - name: List build outputs
+        shell: pwsh
+        run: |
+          Write-Host "=== src/output ==="
+          Get-ChildItem -Path src/output -ErrorAction SilentlyContinue | Select-Object Name, Length | Format-Table -AutoSize
+          Write-Host "=== publish ==="
+          Get-ChildItem -Path publish -ErrorAction SilentlyContinue | Select-Object Name, Length | Format-Table -AutoSize
+          Write-Host "=== cert ==="
+          Get-ChildItem -Path temp-code-signing.cer -ErrorAction SilentlyContinue | Select-Object Name, Length | Format-Table -AutoSize
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}-win10
+          name: Snap Hutao Remastered 自用兼容版 v${{ steps.ver.outputs.version }} (Win10 Compatible)
+          body: |
+            基于 Snap Hutao Remastered v${{ steps.ver.outputs.version }} 的 Win10 自用兼容版。
+
+            **本次改动**
+            - 移除低版本 Windows 警告弹窗（原版要求 >= 10.0.19045.5371，在较旧 Win10 上启动会弹警告）
+            - 设置页新增「启动时检查更新并提示」开关，**默认关闭**
+              - 关闭时：应用启动不再弹更新提示
+              - 设置页手动点「检查更新」不受影响，照常检查并提示
+
+            **安装方式（二选一）**
+
+            1. `-Setup.exe`（推荐）
+               - 双击运行，按向导安装；安装程序会自动把随附的代码签名证书装入「受信任人」，无需手动操作
+               - 若弹出 SmartScreen 提示，点「更多信息 → 仍要运行」
+
+            2. `-*.msix`（旁加载）
+               - 先安装随附的 `SnapHutaoRemasteringProjectCodeSigning.cer` 到「本地计算机 → 受信任人」（或开启「开发人员模式」）
+               - 再双击 `.msix` 安装
+          files: |
+            src/output/*.msix
+            publish/*.exe
+            temp-code-signing.cer
+          update: true
+          generate_release_notes: true

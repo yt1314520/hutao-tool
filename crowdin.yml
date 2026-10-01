@@ -1,0 +1,5 @@
+﻿files:
+  - source: /src/Snap.Hutao.Remastered/Snap.Hutao.Remastered/Resource/Localization/SH.resx
+    translation: /src/Snap.Hutao.Remastered/Snap.Hutao.Remastered/Resource/Localization/SH.%osx_locale%.resx
+  - source: /src/Snap.Hutao.Remastered/Snap.Hutao.Remastered/Resource/Localization/SHRegex.resx
+    translation: /src/Snap.Hutao.Remastered/Snap.Hutao.Remastered/Resource/Localization/SHRegex.%osx_locale%.resx

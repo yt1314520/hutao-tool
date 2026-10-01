@@ -1,0 +1,70 @@
+name: 网络问题
+description: 通过这个议题来反馈网络问题
+title: "[Network]: 在这里填写一个合适的标题"
+type: "Bug"
+labels: ["area-Network"]
+assignees:
+  - nahida-mouo
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **请先在上方为工单设置一个合适的标题**
+        **请按下方的要求填写完整的问题表单，以便我们更快的定位问题。**
+  
+  - type: input
+    id: user-geo-location
+    attributes:
+      label: 你的地理位置
+      description: | 
+        中国用户请精确到省级行政区
+        海外用户请精确到国家
+      placeholder: 北京
+    validations:
+      required: true
+
+  - type: dropdown
+    id: user-isp
+    attributes:
+      label: 你的运营商
+      description: 海外用户请选其它
+      options:
+        - 中国电信
+        - 中国联通
+        - 中国移动
+        - 中国广电
+        - 其它
+    validations:
+      required: true 
+  
+  - type: dropdown
+    id: user-issue-category
+    attributes:
+      label: 你的问题
+      description: 选择一个问题类别
+      options:
+        - 完全无法连接服务器
+        - 连接速度慢
+        - 获取到了不正确的页面或数据
+        - 客户端图片下载错误
+        - 客户端图片预下载错误
+        - 其它
+    validations:
+      required: true 
+  
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 你的问题（补充）
+      description: 如果你在上一项中选择了`其它`或者你有更多信息需要提供，请在这里写下来
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist-final
+    attributes:
+      label: 最后一步
+      description: 检查你提交的议题
+      options:
+        - label: 我已经在该议题中上传了包含网络诊断报告的加密压缩包
+          required: true
