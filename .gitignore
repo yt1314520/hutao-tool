@@ -395,6 +395,10 @@ test-results/
 # Icon must end with two \r
 Icon
 
+# These project directories are source assets, not build output.
+!src/Snap.Hutao.Remastered/Snap.Hutao.Remastered/Win32/
+!src/Snap.Hutao.Remastered/Snap.Hutao.Remastered/Resource/Icon/
+
 
 # Thumbnails
 ._*

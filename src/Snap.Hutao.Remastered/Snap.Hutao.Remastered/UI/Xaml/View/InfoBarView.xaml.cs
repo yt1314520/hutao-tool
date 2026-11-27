@@ -18,6 +18,7 @@ public sealed partial class InfoBarView : UserControl
 {
     private CancellationTokenSource? transitionCancellation;
     private int transitionVersion;
+    private bool isPanelManuallyCollapsed;
     private DispatcherQueueTimer? clearTimer;
     private Queue<InfoBarOptions>? pendingClear;
     private CancellationTokenRegistration shutdownRegistration;
@@ -36,6 +37,7 @@ public sealed partial class InfoBarView : UserControl
     {
         if (XamlApplicationLifetime.Exiting || InfoBars is null) return;
         viewLoaded = true;
+        isPanelManuallyCollapsed = false;
         InfoBars.CollectionChanged -= OnInfoBarsCollectionChanged;
         InfoBars.CollectionChanged += OnInfoBarsCollectionChanged;
         WeakReference<InfoBarView> weak = new(this);
@@ -73,12 +75,29 @@ public sealed partial class InfoBarView : UserControl
     {
         if (!viewLoaded || XamlApplicationLifetime.Exiting || InfoBars is null) return;
         if (InfoBars.Count is 0)
-            BeginAutomaticTransition(showItems: false);
-        else if (args.Action is NotifyCollectionChangedAction.Add)
-            BeginAutomaticTransition(showItems: true);
+        {
+            isPanelManuallyCollapsed = false;
+            BeginTransition(showItems: false);
+        }
+        else if (args.Action is NotifyCollectionChangedAction.Add && !isPanelManuallyCollapsed)
+            BeginTransition(showItems: true);
     }
 
-    private void BeginAutomaticTransition(bool showItems)
+    private void OnExpandPanelClick(object sender, RoutedEventArgs e)
+    {
+        if (!viewLoaded || XamlApplicationLifetime.Exiting) return;
+        isPanelManuallyCollapsed = false;
+        BeginTransition(showItems: true);
+    }
+
+    private void OnCollapsePanelClick(object sender, RoutedEventArgs e)
+    {
+        if (!viewLoaded || XamlApplicationLifetime.Exiting) return;
+        isPanelManuallyCollapsed = true;
+        BeginTransition(showItems: false);
+    }
+
+    private void BeginTransition(bool showItems)
     {
         if (!viewLoaded || XamlApplicationLifetime.Exiting) return;
         StopTransition();
@@ -90,8 +109,7 @@ public sealed partial class InfoBarView : UserControl
             return;
         }
 
-        // Only collection-driven transitions are started here. Normal button
-        // interactions use EventTriggerBehavior/StartTransitionAction in XAML.
+        // Collection updates and explicit button actions share this transition path.
         InfoBarPanelTransitionHelper.Source = source;
         InfoBarPanelTransitionHelper.Target = target;
         InfoBarPanelTransitionHelper.Reset();
@@ -133,8 +151,7 @@ public sealed partial class InfoBarView : UserControl
                         CancellationTokenSource? owner = transitionCancellation;
                         transitionCancellation = null;
                         owner?.Dispose();
-                        // A declarative button action may have changed direction
-                        // while this automatic transition was completing.
+                        // Do not hide the container if the transition direction has changed.
                         if (ReferenceEquals(InfoBarPanelTransitionHelper.Source, source)
                             && ReferenceEquals(InfoBarPanelTransitionHelper.Target, target)
                             && InfoBars is { Count: 0 })

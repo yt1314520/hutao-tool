@@ -8,7 +8,6 @@ namespace Snap.Hutao.Remastered.Core.Setting;
 public static class SettingKeys
 {
     // Application
-    public const string LowWindowsVersionWarningShown   = "Snap::Hutao::Application::LowWindowsVersionWarningShown";
     public const string DataDirectory                   = "Snap::Hutao::Application::DataFolderPath";
     public const string IsUnpackagedNotificationRegistered = "Snap::Hutao::Application::Notification::Unpackaged::Registered";
     public const string OverrideElevationRequirement    = "Snap::Hutao::Application::Elevation::Override";
@@ -23,6 +22,7 @@ public static class SettingKeys
     public const string OverrideUpdateVersionComparison = "Snap::Hutao::Application::Update::VersionComparison::Override";
     public const string MirrorChyanCdk = "Snap::Hutao::Application::Update::MirrorChyanCdk";
     public const string SkippedUpdateVersion = "Snap::Hutao::Application::Update::SkippedVersion";
+    public const string StartupUpdatePromptEnabled = "Snap::Hutao::Application::Update::Startup::PromptEnabled";
 
     // Globalization
     public const string FirstDayOfWeek               = "Snap::Hutao::Globalization::FirstDayOfWeek";

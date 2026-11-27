@@ -18,7 +18,7 @@
 - **Runtime** — **.NET 11**. There is deliberately **no `global.json`**: the build uses whatever
   .NET 11 SDK is installed (any `11.x` feature band and patch), so a contributor is never forced
   onto one particular SDK build. CI follows the same policy and installs only the major version
-  (`actions/setup-dotnet@v6`, `dotnet-version: 11` in all four workflows that build). **Do not
+  (`actions/setup-dotnet@v6`, `dotnet-version: 11` in all five workflows that build). **Do not
   reintroduce `global.json` to pin the SDK** — a pin fails the build on machines that carry a
   different feature band, while the `net11.0*` target frameworks already express the only hard
   requirement (an 11.x SDK).
@@ -109,7 +109,7 @@ retains the existing ZIP guide. See [bundled image distribution](docs/bundled-im
 for the immutable installation/writable cache rules and CI variables.
 
 ```
-.github/                       Issue templates, 8 workflows (alpha/canary/publish/signpath/…), dependabot.yml,
+.github/                       Issue templates, 9 workflows (alpha/canary/publish/signpath/…), dependabot.yml,
                                copilot-instructions.md
 res/                           Assets and misc resources
 Installer/                     Inno Setup installer (installer.iss, ChineseSimplified.isl, VC_redist)
@@ -472,6 +472,23 @@ the build fails with `CS9275`); write a normal constructor in that case.
   start the span after the interaction, around the bounded work. Cheap synchronous commands (copy,
   navigate, filter) intentionally stay untraced.
 
+### 5.10 Compatibility branch behavior
+
+- Startup does not show the low-Windows-version warning dialog. Both package manifests retain the
+  upstream `10.0.19041.0` minimum; this change only removes the warning gate.
+- Automatic startup update checks still run. `AppOptions.StartupUpdatePromptEnabled` defaults to
+  `false` and controls only the automatic prompt; the settings-page manual check is unchanged.
+- Offline startup can use a valid cached `Snap.Metadata` repository. If every catalogue-backed Git
+  source fails, `GitRepositoryService` returns the usable local repository, allowing metadata-backed
+  views to initialize. Network-dependent user initialization is marked pending and retried by
+  `NetworkRetryCoordinator`. `MetadataService.InitializeAsync` remains pending until metadata really
+  initializes (or application shutdown), so a failed attempt is never reported as usable metadata.
+- The notification panel records an explicit user collapse. New notifications update the badge and
+  collection without reversing that collapse; clearing all notifications or expanding the panel
+  restores automatic expansion for later notifications.
+- `.github/workflows/win10-release.yml` publishes the compatibility build using the upstream .NET 11
+  SDK and `publish.cake`; it does not downgrade the project target framework or package minimum.
+
 ## 6. Coding Conventions (rules, not descriptions)
 
 - **MVVM first** — UI logic in ViewModels; code-behind only for view mechanics. No business
@@ -575,7 +592,7 @@ ID — do not "fix" these by documenting them as if they were intended.
 | 5 | Analyzer severities are advisory: 54 `suggestion`, 18 `none`, 2 `warning`, **0** `error`; no `TreatWarningsAsErrors`/`AnalysisLevel`; `NoWarn` swallows `CA2012`; `SA1404` disabled | `src/Snap.Hutao.Remastered/.editorconfig`, app csproj | ENG-01, ENG-02 |
 | 6 | Test project cannot reference the app (0 `ProjectReference`, 39 source links, TFM `net11.0` vs `net11.0-windows…`) | `Snap.Hutao.Remastered.Test.csproj` | BUG-02 |
 | 7 | Manifest allows Windows 10 `10.0.19041.0` while the public support statement says Windows 10 22H2 (Jan-2025) / Windows 11 22H2 — reconcile one of the two | `Package*.appxmanifest`, project docs site | — |
-| 8 | No CI quality gate: none of the 8 workflows runs `dotnet test` or `dotnet format --verify-no-changes` | `.github/workflows/` | ENG-05 |
+| 8 | No CI quality gate: none of the 9 workflows runs `dotnet test` or `dotnet format --verify-no-changes` | `.github/workflows/` | ENG-05 |
 | 9 | No central package management (`Directory.Build.props` / `Directory.Packages.props` absent, 61 `PackageReference`s across the 4 csproj files carry inline versions) | `src/**/*.csproj` | ENG-04 |
 | 10 | `dependabot.yml` NuGet entry still points at the pre-rename path `/src/Snap.Hutao` → no NuGet updates since the rename | `.github/dependabot.yml` | ENG-06 |
 | 11 | Dead code / stale config: `LegacyMetadataService` (396 lines, `[Service]` commented out), `build.cake` targets a non-existent `.sln`, commented-out `#pragma` block | `Service/Metadata/LegacyMetadataService.cs`, `build.cake`, `Web/Hoyolab/SaltConstants.cs` | ENG-08 |
@@ -590,6 +607,7 @@ ID — do not "fix" these by documenting them as if they were intended.
 
 | Date | Change |
 |---|---|
+| 2026-11-28 | Added the 2.0.2 compatibility behavior: allow startup with usable cached metadata while deferring network work, make the automatic startup update prompt opt-in, remove the low-Windows-version warning gate without changing manifest minimums, preserve notification-panel collapse intent, and add the .NET 11 Windows-compatible release workflow. |
 | 2026-11-08 | Added Sentry performance instrumentation (§5.9): every page load and the startup named-pipe redirect start a transaction, and HTTP, SQL, repository/save, EF migration, metadata/git/update/gacha/achievement/user/daily-note/record/plugin/inventory/cultivation/backpack/game-launch/game-package work is captured as nested spans through `SentrySpanScope`; documented the transaction-vs-child policy and the "no user-controlled waits in a transaction" rule. |
 | 2026-11-08 | All 30 typed `DataContext` shadow properties in the binding views read the base dependency property through `Unsafe.As<T>` instead of a checked `(T)base.DataContext` cast, and every such view imports `System.Runtime.CompilerServices`; documented in §6. |
 | 2026-11-08 | `MaterialCardButton` no longer copies the host's resolved `Foreground` onto its inner buttons as a local value; it forwards only a caller-defined color and otherwise clears the local value, so home-card text keeps `ButtonForeground`'s theme expression instead of the application theme captured at construction (black text on dark cards). Documented the rule in §5.3. |

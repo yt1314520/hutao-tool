@@ -81,15 +81,7 @@
             cw:TransitionHelper.Id="Body"
             Background="{ThemeResource SystemControlAcrylicElementBrush}"
             CornerRadius="{ThemeResource ControlCornerRadius}">
-            <wl:LiquidGlassButton shuxcth:ControlMaterialState.IsManaged="True">
-                <mxi:Interaction.Behaviors>
-                    <mxi:EventTriggerBehavior EventName="Click">
-                        <cw:StartTransitionAction
-                            Source="{x:Bind ShowButtonBorder}"
-                            Target="{x:Bind InfoBarItemsBorder}"
-                            Transition="{StaticResource InfoBarPanelTransitionHelper}"/>
-                    </mxi:EventTriggerBehavior>
-                </mxi:Interaction.Behaviors>
+            <wl:LiquidGlassButton Click="OnExpandPanelClick" shuxcth:ControlMaterialState.IsManaged="True">
                 <Grid cw:TransitionHelper.Id="Header">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="auto"/>
@@ -158,15 +150,7 @@
                                     <TextBlock Grid.Column="1" Text="{shuxm:ResourceString Name=ViewInfoBarPanelClearAllContent}"/>
                                 </Grid>
                             </wl:LiquidGlassButton>
-                            <wl:LiquidGlassButton shuxcth:ControlMaterialState.IsManaged="True">
-                                <mxi:Interaction.Behaviors>
-                                    <mxi:EventTriggerBehavior EventName="Click">
-                                        <cw:StartTransitionAction
-                                            Source="{x:Bind InfoBarItemsBorder}"
-                                            Target="{x:Bind ShowButtonBorder}"
-                                            Transition="{StaticResource InfoBarPanelTransitionHelper}"/>
-                                    </mxi:EventTriggerBehavior>
-                                </mxi:Interaction.Behaviors>
+                            <wl:LiquidGlassButton Click="OnCollapsePanelClick" shuxcth:ControlMaterialState.IsManaged="True">
                                 <Grid ColumnSpacing="8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="19"/>

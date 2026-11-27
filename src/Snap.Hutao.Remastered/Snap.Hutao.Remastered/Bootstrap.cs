@@ -14,7 +14,6 @@ using Snap.Hutao.Remastered.Core.Security.Principal;
 using Snap.Hutao.Remastered.Core.Setting;
 using Snap.Hutao.Remastered.Factory.Process;
 using Snap.Hutao.Remastered.Service.Job;
-using Snap.Hutao.Remastered.Win32;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -118,8 +117,6 @@ public static partial class Bootstrap
 
         using (instanceHandle)
         {
-            ShowLowWindowsVersionWarningOnce();
-
             Environment.SetEnvironmentVariable("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "00000000");
             Environment.SetEnvironmentVariable("DOTNET_SYSTEM_BUFFERS_SHAREDARRAYPOOL_MAXARRAYSPERPARTITION", "128");
             AppContext.SetData("MVVMTOOLKIT_ENABLE_INOTIFYPROPERTYCHANGING_SUPPORT", false);
@@ -321,23 +318,5 @@ public static partial class Bootstrap
         }
 
         return true;
-    }
-
-    private static void ShowLowWindowsVersionWarningOnce()
-    {
-        if (HutaoNative.Instance.IsCurrentWindowsVersionSupported())
-        {
-            return;
-        }
-
-        if (!LocalSetting.Get(SettingKeys.LowWindowsVersionWarningShown, false))
-        {
-            const string Message = """
-                Snap Hutao Remastered 无法在版本低于 10.0.19045.5371 的 Windows 上运行，请更新系统。
-                Snap Hutao Remastered cannot run on Windows versions earlier than 10.0.19045.5371. Please update your system.
-                """;
-            HutaoNative.Instance.ShowErrorMessage("Warning | 警告", Message);
-            LocalSetting.Set(SettingKeys.LowWindowsVersionWarningShown, true);
-        }
     }
 }

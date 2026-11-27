@@ -108,6 +108,13 @@ public sealed partial class GitRepositoryService : IGitRepositoryService
                         exceptions.Add(second);
                     }
                 }
+
+                token.ThrowIfCancellationRequested();
+                if (IsUsableRepository(directory))
+                {
+                    succeeded = true;
+                    return new(true, directory);
+                }
             }
             catch (Exception)
             {

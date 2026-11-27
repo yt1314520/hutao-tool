@@ -196,6 +196,9 @@ public sealed partial class AppOptions : DbStoreOptions
     [field: MaybeNull]
     public IObservableProperty<bool> IsStartupAsAdminEnabled { get => field ??= CreateProperty(SettingKeys.StartupAsAdminEnabled, false); }
 
+    [field: MaybeNull]
+    public IObservableProperty<bool> StartupUpdatePromptEnabled { get => field ??= CreateProperty(SettingKeys.StartupUpdatePromptEnabled, false); }
+
     private static void OnAutoRestartAsAdminChanged(bool isAdminRestart, AppOptions appOptions)
     {
         // When AutoRestartAsAdmin is set to True, automatically set IsStartupAsAdminEnabled to True

@@ -3429,6 +3429,12 @@
   <data name="ViewPageSettingCheckUpdateHeader" xml:space="preserve">
     <value>检查更新</value>
   </data>
+  <data name="ViewPageSettingStartupUpdatePromptHeader" xml:space="preserve">
+    <value>启动时检查更新并提示</value>
+  </data>
+  <data name="ViewPageSettingStartupUpdatePromptDescription" xml:space="preserve">
+    <value>打开后，应用启动时会自动检查更新并弹出更新提示；关闭后启动时不再弹窗。设置页的“检查更新”按钮不受影响。</value>
+  </data>
   <data name="ViewPageSettingCloseButtonBehaviorNotifyIconFailedToCreateWarning" xml:space="preserve">
     <value>通知区域图标创建失败，无法调整关闭按钮行为</value>
   </data>

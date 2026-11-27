@@ -1,0 +1,105 @@
+name: Win10 Compatible Release (自用兼容版)
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 11
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
+      - name: Read version from manifest
+        id: ver
+        shell: pwsh
+        run: |
+          $manifest = [xml](Get-Content -LiteralPath 'src/Snap.Hutao.Remastered/Snap.Hutao.Remastered/Package.appxmanifest')
+          $version = $manifest.Package.Identity.Version
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          Write-Host "Version: $version"
+
+      - name: Create self-signed code-signing certificate
+        shell: pwsh
+        run: |
+          $password = "hutao-compat-build"
+          $certificate = New-SelfSignedCertificate `
+            -Type CodeSigningCert `
+            -Subject "CN=SnapHutaoRemasteringProject" `
+            -KeyAlgorithm RSA `
+            -KeyLength 2048 `
+            -HashAlgorithm SHA256 `
+            -KeyExportPolicy Exportable `
+            -CertStoreLocation Cert:\CurrentUser\My `
+            -NotAfter (Get-Date).AddYears(5)
+          $securePassword = ConvertTo-SecureString -String $password -Force -AsPlainText
+          Export-PfxCertificate -Cert $certificate -FilePath temp.pfx -Password $securePassword -Force | Out-Null
+          [Convert]::ToBase64String([IO.File]::ReadAllBytes("$PWD\temp.pfx")) | Set-Content -LiteralPath cert.b64 -NoNewline
+          Write-Host "Subject: $($certificate.Subject)"
+          Write-Host "Thumbprint: $($certificate.Thumbprint)"
+          Write-Host "PFX size: $((Get-Item temp.pfx).Length) bytes"
+
+      - name: Publish MSIX and installer
+        shell: pwsh
+        run: |
+          $env:PUBLISH_CERT = Get-Content -LiteralPath cert.b64 -Raw
+          $env:PUBLISH_PW = "hutao-compat-build"
+          dotnet tool restore
+          if ($LASTEXITCODE -ne 0) { throw "Cake tool restore failed: $LASTEXITCODE" }
+          dotnet cake publish.cake
+          if ($LASTEXITCODE -ne 0) { throw "Publish failed: $LASTEXITCODE" }
+
+      - name: List build outputs
+        shell: pwsh
+        run: |
+          Write-Host "=== MSIX ==="
+          Get-ChildItem -Path src/output -ErrorAction SilentlyContinue | Select-Object Name, Length | Format-Table -AutoSize
+          Write-Host "=== Setup ==="
+          Get-ChildItem -Path publish -ErrorAction SilentlyContinue | Select-Object Name, Length | Format-Table -AutoSize
+          Write-Host "=== Certificate ==="
+          Get-ChildItem -Path temp-code-signing.cer -ErrorAction SilentlyContinue | Select-Object Name, Length | Format-Table -AutoSize
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}-win10
+          target_commitish: ${{ github.sha }}
+          name: Snap Hutao Remastered 自用兼容版 v${{ steps.ver.outputs.version }} (Win10 Compatible)
+          body: |
+            基于 Snap Hutao Remastered v${{ steps.ver.outputs.version }} 的 Win10 自用兼容版。
+
+            **本次改动**
+            - 移除低版本 Windows 启动警告弹窗；应用包声明的最低版本仍为 10.0.19041.0。
+            - 设置页新增「启动时检查更新并提示」开关，默认关闭。关闭时启动仍会检查更新，但不弹出自动更新提示；手动检查更新不受影响。
+            - 离线时优先使用可用的本地元数据仓库完成启动；需要网络的用户初始化任务会在网络恢复后自动重试。
+            - 通知面板手动收起后，新通知不会打断收起动画或自动展开面板；通知数量仍会更新。
+
+            **安装方式（二选一）**
+
+            1. `-Setup.exe`（推荐）
+               - 双击运行并按向导安装；安装程序会自动安装随附的代码签名证书。
+               - 若出现 SmartScreen 提示，选择「更多信息 → 仍要运行」。
+
+            2. `-*.msix`（旁加载）
+               - 先将随附的 `SnapHutaoRemasteringProjectCodeSigning.cer` 安装到「本地计算机 → 受信任人」，或开启「开发人员模式」。
+               - 再双击 `.msix` 安装。
+          files: |
+            src/output/*.msix
+            publish/*.exe
+            temp-code-signing.cer
+          update: true
+          generate_release_notes: true

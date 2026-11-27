@@ -132,7 +132,10 @@ public sealed partial class MainViewModel : Abstraction.ViewModel, IDisposable
         CheckUpdateResult checkUpdateResult = await updateService.CheckUpdateAsync(timeout.Token).ConfigureAwait(false);
         token.ThrowIfCancellationRequested();
         if (XamlApplicationLifetime.Exiting || IsViewUnloaded.Value) return false;
-        await updateService.TriggerUpdateAsync(checkUpdateResult, isAutomatic: true, token: token).ConfigureAwait(false);
+        if (AppOptions.StartupUpdatePromptEnabled.Value)
+        {
+            await updateService.TriggerUpdateAsync(checkUpdateResult, isAutomatic: true, token: token).ConfigureAwait(false);
+        }
         return true;
     }
 
@@ -231,8 +234,16 @@ public sealed partial class MainViewModel : Abstraction.ViewModel, IDisposable
                 return false;
             }
 
-            await userService.RetryResumeUninitializedUsersAsync(token).ConfigureAwait(false);
-            networkRetryCoordinator.ClearPending(StartupRetryKey);
+            if (!RepositoryCatalog.IsOffline && await networkRetryCoordinator.HasInternetAccessAsync(token).ConfigureAwait(false))
+            {
+                await userService.RetryResumeUninitializedUsersAsync(token).ConfigureAwait(false);
+                networkRetryCoordinator.ClearPending(StartupRetryKey);
+            }
+            else
+            {
+                networkRetryCoordinator.MarkPending(StartupRetryKey, SH.ViewModelMainNetworkConnectionFailedWillAutoRetry);
+            }
+
             return true;
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested)

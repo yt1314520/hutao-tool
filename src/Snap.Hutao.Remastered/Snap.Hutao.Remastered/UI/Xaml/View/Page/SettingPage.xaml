@@ -118,6 +118,16 @@
                                     HeaderIcon="{shuxm:FontIcon Glyph=&#xE895;}"
                                     IsClickEnabled="True"/>
 
+                                <cwc:SettingsCard
+                                    Description="{shuxm:ResourceString Name=ViewPageSettingStartupUpdatePromptDescription}"
+                                    Header="{shuxm:ResourceString Name=ViewPageSettingStartupUpdatePromptHeader}"
+                                    HeaderIcon="{shuxm:FontIcon Glyph=&#xE7BA;}"
+                                    IsClickEnabled="False">
+                                    <wl:LiquidGlassToggleSwitch
+                                        shuxcth:ControlMaterialState.IsManaged="True"
+                                        IsOn="{x:Bind DataContext.AppOptions.StartupUpdatePromptEnabled.Value, Mode=TwoWay}"/>
+                                </cwc:SettingsCard>
+
                                 <!--  Administor  -->
                                 <cwc:SettingsExpander HeaderIcon="{shuxm:FontIcon Glyph=&#xE7EF;}" IsExpanded="True">
                                     <cwc:SettingsExpander.Header>
@@ -269,6 +279,16 @@
                                     Header="{shuxm:ResourceString Name=ViewPageSettingCheckUpdateHeader}"
                                     HeaderIcon="{shuxm:FontIcon Glyph=&#xE895;}"
                                     IsClickEnabled="True"/>
+
+                                <cwc:SettingsCard
+                                    Description="{shuxm:ResourceString Name=ViewPageSettingStartupUpdatePromptDescription}"
+                                    Header="{shuxm:ResourceString Name=ViewPageSettingStartupUpdatePromptHeader}"
+                                    HeaderIcon="{shuxm:FontIcon Glyph=&#xE7BA;}"
+                                    IsClickEnabled="False">
+                                    <wl:LiquidGlassToggleSwitch
+                                        shuxcth:ControlMaterialState.IsManaged="True"
+                                        IsOn="{x:Bind DataContext.AppOptions.StartupUpdatePromptEnabled.Value, Mode=TwoWay}"/>
+                                </cwc:SettingsCard>
 
                                 <!--  Administor  -->
                                 <cwc:SettingsExpander HeaderIcon="{shuxm:FontIcon Glyph=&#xE7EF;}" IsExpanded="True">
